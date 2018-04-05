@@ -13,37 +13,15 @@
 #define ELEVATOR_DOOR_CLOSING_TIME 1 // [sec]
 #define TOP_FLOOR 7 // [-]
 #define TERMINAL_FLOOR 0 // [-]
+enum{ UP = 1, DOWN = -1};
 
 
-float current_time;
-
-
-
-class MasterElevator{
-
-private:
-
-    //Subscribers
-    ros::Subscriber sub_elevator_call;
-    ros::Subscriber sub_clock;
-
-    //private variables
-
-
-public:
-
-    MasterElevator(ros::NodeHandle &nh);
-
-    //callback
-    void getCurrentTime(const std_msgs::Float32::ConstPtr& subMsg);
-    void pickElevatorToHandleCall(const simulation::calls& subMsg);
-};
 
 
 class ElevatorStatus{
 
-private:
-
+//private:
+public:
     unsigned int currentFloor;
     unsigned int destinationFloor;
     unsigned int nrPassengersInElevator;
@@ -55,30 +33,80 @@ private:
     float totTravelTime;
     float timeToNextDestinationFloor;
 
-public:
-
+    ElevatorStatus();
     void initializeElevator();
-
+    void setElevatorStatus();
 };
 
-// ************************ INITIALIZATION ****************************//
+class MasterElevator{
+
+private:
+
+    //Subscribers
+    ros::Subscriber sub_elevator_call;
+    ros::Subscriber sub_clock;
+
+    float timeLastCall;
+    unsigned floorLastCall;
+    int directionLastCall;
+
+public:
+
+    //MasterElevator(){timeLastCall = 0; floorLastCall = 0;directionLastCall = 1;}
+    MasterElevator(ros::NodeHandle &nh);
+    ElevatorStatus Elevator1;
+    ElevatorStatus Elevator2;
+
+    //callback
+    void getCurrentTime(const std_msgs::Float32::ConstPtr& subMsg);
+    void pickElevatorToHandleCall(const simulation::calls& subMsg);
+};
+
+// ************************ INITIALIZATION **************************** //
+
+// ********************** Global ************************ //
+
+//global time
+float current_time;
+
+//create two elevator objects
+//ElevatorStatus Elevator1;
+//ElevatorStatus Elevator2;
+//MasterElevator Master;
 
 void ElevatorStatus::initializeElevator() {
-
-
-
-
+    currentFloor = 0;
+    nrPassengersInElevator = 0;
+    totNrPassengersHandled = 0;
+    travelDirection = UP;
+    idle = true;
+    empty = true;
+    totWaitingTime = 0;
+    totTravelTime = 0;
 }
 
+ElevatorStatus::ElevatorStatus(){
+    initializeElevator();
+}
+
+// ******************************************************************** //
 
 //Constructor
+
 MasterElevator::MasterElevator(ros::NodeHandle &nh) {
 
+    ElevatorStatus elev1;
+    ElevatorStatus elev2;
+    Elevator1 = elev1;
+    Elevator2 = elev2;
 
+    timeLastCall = 0;
+    floorLastCall = 0;
+    directionLastCall = 1;
 
+    //initialize subscribers
     sub_clock = nh.subscribe("/clock",1000,&MasterElevator::getCurrentTime,this);
     sub_elevator_call = nh.subscribe("/publishCallMsg",1000,&MasterElevator::pickElevatorToHandleCall,this);
-
 }
 
 //callback function
@@ -90,12 +118,19 @@ void MasterElevator::getCurrentTime(const std_msgs::Float32::ConstPtr& subMsg){
 void MasterElevator::pickElevatorToHandleCall(const simulation::calls& subMsg) {
 
     //New call
-    time = subMsg.time;
-    floor = subMsg.floor;
-    direction = subMsg.direction;
+    bool newCall = subMsg.newCall;
+    float time = subMsg.time;
+    unsigned int floor = subMsg.floor;
+    int direction = subMsg.direction;
+
+    if (newCall){
+
+        std::cout << "new call: " << std::endl;
 
 
 
+
+    }//if
 }
 
 
@@ -104,7 +139,8 @@ void MasterElevator::pickElevatorToHandleCall(const simulation::calls& subMsg) {
 int main(int argc, char** argv){
     ros::init(argc, argv, "node_distance_logger");
     ros::NodeHandle nh;
-    MasterElevator master(nh);
+    MasterElevator M(nh);
+
     ros::spin();
     return 0;
 }
