@@ -73,25 +73,29 @@ CallGenerator::CallGenerator(ros::NodeHandle &nh){
 
 
 void CallGenerator::time_to_publish() {
-
-    Call latest_call = requests.front();
     simulation::calls msg;
+    msg.newCall = false;
+    if (requests.size() > 0) {
+        Call latest_call = requests.front();
 
-    //if new call has arrived
-    if (current_time > latest_call.time) {
+        //if new call has arrived
+        if (current_time > latest_call.time) {
 
-        msg.time = latest_call.time;
-        msg.floor = latest_call.floor;
-        msg.direction = latest_call.direction;
+            msg.newCall = true;
+            msg.time = latest_call.time;
+            msg.floor = latest_call.floor;
+            msg.direction = latest_call.direction;
 
-        //remove caller from queue
-        requests.pop();
+            //remove caller from queue
+            requests.pop();
 
-        //write to screen
-        std::cout << "New caller: " << std::endl;
-        std::cout << "time of call: " << msg.time << std::endl;
-        std::cout << "from floor: " << msg.floor << std::endl;
-        std::cout << "travel direction: " << msg.direction << std::endl;
+            //write to screen
+            std::cout << "New caller: " << std::endl;
+            std::cout << "new: " << msg.newCall << std::endl;
+            std::cout << "time of call: " << msg.time << std::endl;
+            std::cout << "from floor: " << msg.floor << std::endl;
+            std::cout << "travel direction: " << msg.direction << std::endl;
+        }
     }
 
     //publish
