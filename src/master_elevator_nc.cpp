@@ -211,7 +211,7 @@ void ElevatorStatus::ElevatorStateController() {
     //check if current floor is in the drop off Queue
     if (drop_Off_Queue.size() > 0){
 
-        //Add up total travel time
+        //Add up total travel times
         totTravelTime += drop_Off_Queue.size()*dt;
 
         //Check if current floor is queued
