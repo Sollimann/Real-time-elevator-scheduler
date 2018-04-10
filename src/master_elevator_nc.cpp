@@ -10,7 +10,7 @@
 
 // ********************** DEFINE *********************** //
 #define dt 0.1 // [s]
-#define ELEVATOR_TRAVEL_SPEED 1 // [floor/sec]
+#define ELEVATOR_TRAVEL_SPEED 1.0 // [floor/sec]
 #define ELEVATOR_DWELLTIME_AT_FLOOR 3 // [sec]
 #define NUMBER_OF_FLOORS // [-]
 #define TOP_FLOOR 7 // [-]
@@ -94,6 +94,7 @@ float current_time;
 //MasterElevator Master;
 
 void ElevatorStatus::initializeElevator() {
+    exactElevatorPosition = 0;
     currentFloor = 0;
     nrPassengersInElevator = 0;
     //totNrPassengersHandled = 0;
@@ -104,6 +105,7 @@ void ElevatorStatus::initializeElevator() {
     totTravelTime = 0;
 }
 
+// Constructor
 ElevatorStatus::ElevatorStatus(){
     initializeElevator();
 }
@@ -152,8 +154,7 @@ int ElevatorStatus::figureOfSuitability(int callAtFloor,int callGoingToFloor) {
         //the elevator car is moving towards the landing call and the call is set in the same direction.
         FS = NUMBER_OF_FLOORS + 1 - (distanceToCaller-1);
         std::cout << "FS1: ";
-    }
-    else if((currentMovingDirection < 0 && directionOfCall > 0) || (currentMovingDirection > 0 && directionOfCall < 0) ){
+    }else if((currentMovingDirection < 0 && directionOfCall > 0) || (currentMovingDirection > 0 && directionOfCall < 0) ){
         //the elevator car is moving towards the landing call but the call is set to the opposite direction.
         FS = NUMBER_OF_FLOORS + 1 - distanceToCaller;
         std::cout << "FS2: ";
@@ -180,10 +181,22 @@ int ElevatorStatus::figureOfSuitability(int callAtFloor,int callGoingToFloor) {
 void ElevatorStatus::ElevatorStateController() {
 
     //Calculate elevator position
-    exactElevatorPosition += exactElevatorPosition + travelDirection*(ELEVATOR_TRAVEL_SPEED*dt);
-    currentFloor = floor(currentFloor);
+
+    //If there is any request for the elevator, then move
+    if (pick_Up_Queue.size() > 0 || drop_Off_Queue.size() > 0) {
+        exactElevatorPosition += travelDirection * (ELEVATOR_TRAVEL_SPEED * dt);
+        currentFloor = floor(exactElevatorPosition);
+        std::cout << "ExactElevatorPosition: " << exactElevatorPosition << std::endl;
+    }
+
+    destinationFloor = 7;
+
+    if (currentFloor == 7){
+        destinationFloor = 1;
+    }
 
     //Check if current floor is in the pick up Queue
+
     if (pick_Up_Queue.size() > 0) {
 
         //Add up total waiting time
@@ -193,34 +206,45 @@ void ElevatorStatus::ElevatorStateController() {
         //Check if current floor is queued
         for (std::deque<std::pair<unsigned int,unsigned int> >::iterator it=pick_Up_Queue.begin(); it!=pick_Up_Queue.end(); ++it) {
 
+            std::cout << "it->first: " << it->first << "it->second: " << it->second << std::endl;
+            std::cout << "pick up size: " << pick_Up_Queue.size() << "drop off size: " << drop_Off_Queue.size() << std::endl;
 
             if (it->first == currentFloor){
                 //If current floor is in the pick up Queue add to drop off Queue
                 //and then pop element from pick up Queue
-                drop_Off_Queue.push_back(it->first);
+                drop_Off_Queue.push_back(it->second);
                 pick_Up_Queue.erase(it);
 
                 //Also add dwelling time for stopping at floor
                 totWaitingTime += ELEVATOR_DWELLTIME_AT_FLOOR*dt;
+                std::cout << "it->first: " << it->first << "it->second: " << it->second << std::endl;
+                std::cout << "totTime: " << totWaitingTime << std::endl;
                 std::cout << "Elevator picks up passenger at floor: " << currentFloor << std::endl;
+
+                break; //leave for loop
+
             }//if
         }//for
-
+        std::cout << "out of for loop " << std::endl;
     }//if
 
     //check if current floor is in the drop off Queue
     if (drop_Off_Queue.size() > 0){
-
+        std::cout << "inside drop off" << std::endl;
         //Add up total travel times
         totTravelTime += drop_Off_Queue.size()*dt;
 
         //Check if current floor is queued
         for (std::deque<unsigned int>::iterator it=drop_Off_Queue.begin(); it!=drop_Off_Queue.end(); ++it){
+
             if(*it == currentFloor){
 
-                //if
+                //Visit is registered by removing element from queue
+                drop_Off_Queue.erase(it);
 
+                std::cout << "Elevator drops of passenger at floor" << currentFloor << std::endl;
             }
+            std::cout << "inside for" << std::endl;
         }
 
 
@@ -246,7 +270,7 @@ void ElevatorStatus::ElevatorStateController() {
 */
 
 
-
+std::cout << "end of callback" << std::endl;
 
 
  }
@@ -264,7 +288,7 @@ void MasterElevator::getCurrentTime(const std_msgs::Float32::ConstPtr& subMsg){
 
 //callback function
 void MasterElevator::pickElevatorToHandleCall(const simulation::calls& subMsg) {
-
+std::cout << "pickelevatorCount" << std::endl;
     //New call
     bool newCall = subMsg.newCall;
     float time = subMsg.time;
@@ -274,7 +298,7 @@ void MasterElevator::pickElevatorToHandleCall(const simulation::calls& subMsg) {
     //std::cout << "Direction: " << direction << std::endl;
 
     if (newCall){
-
+    std::cout << "newcall" << std::endl;
         //Update total number of passengers
         totNrPassengersHandled++;
 
@@ -310,7 +334,7 @@ void MasterElevator::pickElevatorToHandleCall(const simulation::calls& subMsg) {
 // ******************************* ROS specific*******************************//
 
 int main(int argc, char** argv){
-    ros::init(argc, argv, "node_distance_logger");
+    ros::init(argc, argv, "master_elevator_nc");
     ros::NodeHandle nh;
     MasterElevator M(nh);
 
