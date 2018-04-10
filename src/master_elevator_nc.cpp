@@ -101,6 +101,7 @@ float current_time;
 void ElevatorStatus::initializeElevator() {
     exactElevatorPosition = 0;
     currentFloor = 0;
+    destinationFloor = 7;
     nrPassengersInElevator = 0;
     //totNrPassengersHandled = 0;
     travelDirection = UP;
@@ -182,35 +183,31 @@ int ElevatorStatus::figureOfSuitability(int callAtFloor,int callGoingToFloor) {
 std::pair<unsigned int,unsigned int> ElevatorStatus::getMaxAndMinFloorInQueue() {
 
     //if the Queues are empty
-    if (!(pick_Up_Queue.size() > 0 || drop_Off_Queue.size() > 0)){
+    if (pick_Up_Queue.size() == 0 && drop_Off_Queue.size() == 0){
         return std::make_pair(0,0);
     }
 
+    //This ensures that maxFloor = minFloor if only there is one
+    //element left in both queues combined
     unsigned int maxFloor = 0;
-    unsigned int minFloor = 0;
+    unsigned int minFloor = 7;
 
-    //Check pick-up Queue first
-    for (std::deque<std::pair<unsigned int,unsigned int> >::iterator it=pick_Up_Queue.begin(); it!=pick_Up_Queue.end(); ++it){
-        maxFloor = std::max(it->first,maxFloor);
-        minFloor = std::min(it->first,minFloor);
-    }
-
-    //Check drop-off Queue second
-    for (std::deque<unsigned int>::iterator it=drop_Off_Queue.begin(); it!=drop_Off_Queue.end(); ++it){
-
-        maxFloor = std::max(*it,maxFloor);
-        minFloor = std::min(*it,minFloor);
-    }
-
-        //Making sure we are within the constrained floors
-        /*
-        if (maxFloor > TOP_FLOOR){
-            maxFloor = TOP_FLOOR;
-        }else if(minFloor < TERMINAL_FLOOR){
-            minFloor = TERMINAL_FLOOR;
+    //Check pick-up Queue first if not empty
+    if(pick_Up_Queue.size() > 0) {
+        for (std::deque<std::pair<unsigned int, unsigned int> >::iterator it = pick_Up_Queue.begin(); it != pick_Up_Queue.end(); ++it) {
+            maxFloor = std::max(it->first, maxFloor);
+            minFloor = std::min(it->first, maxFloor);
         }
-    */
+    }
 
+    //Check drop-off Queue second if not empty
+    if(drop_Off_Queue.size() > 0) {
+        for (std::deque<unsigned int>::iterator it = drop_Off_Queue.begin(); it != drop_Off_Queue.end(); ++it) {
+
+            maxFloor = std::max(*it, maxFloor);
+            minFloor = std::min(*it, minFloor);
+        }
+    }
 
         return std::make_pair(maxFloor,minFloor);
 }
@@ -228,7 +225,7 @@ void ElevatorStatus::ElevatorStateController(int elevatorID) {
     std::cout << "Elevator " << elevatorID << " has " << pick_Up_Queue.size() << " waiting for pick-up" << std::endl;
     std::cout << "Elevator " << elevatorID << " has " << drop_Off_Queue.size() << " waiting for drop-off" << std::endl;
     std::cout << "Elevator " << elevatorID << " destination floor is " << destinationFloor << std::endl;
-
+    std::cout << "Elevator " << elevatorID << " travel Direction is " << travelDirection << std::endl;
     //Calculate elevator position
     //If there is any request for the elevator, then move
     //If not, stay idle
@@ -236,82 +233,107 @@ void ElevatorStatus::ElevatorStateController(int elevatorID) {
         exactElevatorPosition += travelDirection * (ELEVATOR_TRAVEL_SPEED * dt);
         currentFloor = floor(exactElevatorPosition);
 
-    }
-
-    destinationFloor = 7;
-
-    if (currentFloor == 7){
-        destinationFloor = 1;
-    }
-
-    //Check if current floor is in the pick up Queue
-
-    if (pick_Up_Queue.size() > 0) {
-
-        //Add up total waiting time
-        totWaitingTime += pick_Up_Queue.size()*dt;
 
 
-        //Check if current floor is queued
-        for (std::deque<std::pair<unsigned int,unsigned int> >::iterator it=pick_Up_Queue.begin(); it!=pick_Up_Queue.end(); ++it) {
+        /*
+        destinationFloor = 7;
 
-            //std::cout << "it->first: " << it->first << "it->second: " << it->second << std::endl;
-            if (it->first == currentFloor){
-                //If current floor is in the pick up Queue add to drop off Queue
-                //and then pop element from pick up Queue
-                drop_Off_Queue.push_back(it->second);
-                pick_Up_Queue.erase(it);
+        if (currentFloor == 7){
+            destinationFloor = 1;
+        }
+    */
+        //Check if current floor is in the pick up Queue
 
-                //Also add dwelling time for stopping at floor
-                totWaitingTime += ELEVATOR_DWELLTIME_AT_FLOOR*dt;
+        if (pick_Up_Queue.size() > 0) {
 
-                std::cout << "Elevator " << elevatorID << " picks up passenger at floor: " << currentFloor << std::endl;
+            //Add up total waiting time
+            totWaitingTime += pick_Up_Queue.size() * dt;
 
-                break; //leave for loop
 
-            }//if
-            //std::cout << "inside for" << std::endl;
-        }//for
-    }//if
+            //Check if current floor is queued
+            for (std::deque<std::pair<unsigned int, unsigned int> >::iterator it = pick_Up_Queue.begin();
+                 it != pick_Up_Queue.end(); ++it) {
 
-    //check if current floor is in the drop off Queue
-    if (drop_Off_Queue.size() > 0){
+                //std::cout << "it->first: " << it->first << "it->second: " << it->second << std::endl;
+                if (it->first == currentFloor) {
+                    //If current floor is in the pick up Queue add to drop off Queue
+                    //and then pop element from pick up Queue
+                    drop_Off_Queue.push_back(it->second);
+                    pick_Up_Queue.erase(it);
 
-        //Add up total travel times
-        totTravelTime += drop_Off_Queue.size()*dt;
+                    //Also add dwelling time for stopping at floor
+                    totWaitingTime += ELEVATOR_DWELLTIME_AT_FLOOR * dt;
 
-        //Check if current floor is queued
-        for (std::deque<unsigned int>::iterator it=drop_Off_Queue.begin(); it!=drop_Off_Queue.end(); ++it){
+                    std::cout << "Elevator " << elevatorID << " picks up passenger at floor: " << currentFloor
+                              << std::endl;
 
-            if(*it == currentFloor){
+                    break; //leave for loop
 
-                //Visit is registered by removing element from queue
-                drop_Off_Queue.erase(it);
+                }//if
+                //std::cout << "inside for" << std::endl;
+            }//for
+        }//if
 
-                std::cout << "Elevator " << elevatorID << " drops off passenger at floor: " << currentFloor << std::endl;
-                break; //leave for loop
+        //check if current floor is in the drop off Queue
+        if (drop_Off_Queue.size() > 0) {
+
+            //Add up total travel times
+            totTravelTime += drop_Off_Queue.size() * dt;
+
+            //Check if current floor is queued
+            for (std::deque<unsigned int>::iterator it = drop_Off_Queue.begin(); it != drop_Off_Queue.end(); ++it) {
+
+                if (*it == currentFloor) {
+
+                    //Visit is registered by removing element from queue
+                    drop_Off_Queue.erase(it);
+
+                    std::cout << "Elevator " << elevatorID << " drops off passenger at floor: " << currentFloor
+                              << std::endl;
+                    break; //leave for loop
+                }
+                //std::cout << "inside for" << std::endl;
             }
-            //std::cout << "inside for" << std::endl;
+
+
+        }
+
+
+        /*********************** Choosing next destination floor *******************/
+
+        //Here we want to set: travelDirection and destination floor
+
+        unsigned int maxFloor = getMaxAndMinFloorInQueue().first;
+        unsigned int minFloor = getMaxAndMinFloorInQueue().second;
+
+        std::cout << "Elevator " << elevatorID << " maxFloor is " << maxFloor << std::endl;
+        std::cout << "Elevator " << elevatorID << " minFloor is " << minFloor << std::endl;
+
+        //Upward riding logic
+        if ((maxFloor > currentFloor) && travelDirection == UP) {
+            travelDirection = UP;
+            destinationFloor = maxFloor;
+        } else if (currentFloor == TERMINAL_FLOOR) {
+            travelDirection = UP;
+            destinationFloor = maxFloor;
+        }
+
+        //Downward riding logic
+        if (maxFloor <= currentFloor) {
+            travelDirection = DOWN;
+            destinationFloor = minFloor;
+        } else if ((minFloor < currentFloor) && travelDirection == DOWN) {
+            travelDirection = DOWN;
+            destinationFloor = minFloor;
+        } else if (currentFloor == TOP_FLOOR) {
+            travelDirection = DOWN;
+            destinationFloor = minFloor;
         }
 
 
     }
 
-
-    /*********************** Choosing next destination floor *******************/
-
-
-    unsigned int maxFloor = getMaxAndMinFloorInQueue().first;
-    unsigned int minFloor = getMaxAndMinFloorInQueue().second;
-
-    std::cout << "Elevator " << elevatorID << " maxFloor is " << maxFloor << std::endl;
-    std::cout << "Elevator " << elevatorID << " minFloor is " << minFloor << std::endl;
-
-
  }
-
-
-
 
 
 
@@ -341,8 +363,8 @@ void MasterElevator::pickElevatorToHandleCall(const simulation::calls& subMsg) {
         int FS_E1 = Elevator1.figureOfSuitability(0,direction);
         int FS_E2 = Elevator2.figureOfSuitability(3,direction);
 
-        //std::cout << "FS_E1: " << FS_E1 << std::endl;
-        //std::cout << "FS_E2: " << FS_E2 << std::endl;
+        std::cout << "FS_E1: " << FS_E1 << std::endl;
+        std::cout << "FS_E2: " << FS_E2 << std::endl;
 
         //make queue pair
         std::pair<unsigned int,unsigned int> call;
