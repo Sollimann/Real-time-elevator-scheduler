@@ -1,12 +1,13 @@
 #include "ros/ros.h"
 #include "std_msgs/String.h"
-#include "armadillo"
+//#include "armadillo"
 #include "deque"
 #include "simulation/calls.h"
 #include <ctime>
 #include <sys/time.h>
 #include <std_msgs/Float32.h>
 #include <math.h>
+#include <algorithm>
 
 // ********************** DEFINE *********************** //
 #define dt 0.1 // [s]
@@ -16,6 +17,7 @@
 #define TOP_FLOOR 7 // [-]
 #define TERMINAL_FLOOR 0 // [-]
 enum{ UP = 1, DOWN = -1};
+enum{ E1 = 1, E2 = 2}; //ElevatorID
 
 
 
@@ -46,7 +48,10 @@ public:
     int figureOfSuitability(int callAtFloor,int callGoingToFloor);
 
     //The elevator controller system
-    void ElevatorStateController();
+    void ElevatorStateController(int elevatorID);
+
+    //Finds max and min floor in queue
+    std::pair<unsigned int,unsigned int> getMaxAndMinFloorInQueue();
 
     //Elevator Queues
     //std::deque<unsigned int> pick_Up_Queue;
@@ -145,26 +150,26 @@ int ElevatorStatus::figureOfSuitability(int callAtFloor,int callGoingToFloor) {
     int distanceToCaller = callAtFloor - currentFloor;
     distanceToCaller = abs(distanceToCaller);
 
-    std::cout << "directionOfCall: " << directionOfCall << std::endl;
-    std::cout << "currentMovingDirection: " << currentMovingDirection << std::endl;
-    std::cout << "distanceToCaller: " << distanceToCaller << std::endl;
-    std::cout << "currentFloor: " << currentFloor << std::endl;
+    //std::cout << "directionOfCall: " << directionOfCall << std::endl;
+    //std::cout << "currentMovingDirection: " << currentMovingDirection << std::endl;
+    //std::cout << "distanceToCaller: " << distanceToCaller << std::endl;
+    //std::cout << "currentFloor: " << currentFloor << std::endl;
 
     if ((currentMovingDirection > 0 && directionOfCall > 0) || (currentMovingDirection < 0 && directionOfCall < 0)){
         //the elevator car is moving towards the landing call and the call is set in the same direction.
         FS = NUMBER_OF_FLOORS + 1 - (distanceToCaller-1);
-        std::cout << "FS1: ";
+        //std::cout << "FS1: ";
     }else if((currentMovingDirection < 0 && directionOfCall > 0) || (currentMovingDirection > 0 && directionOfCall < 0) ){
         //the elevator car is moving towards the landing call but the call is set to the opposite direction.
         FS = NUMBER_OF_FLOORS + 1 - distanceToCaller;
-        std::cout << "FS2: ";
+        //std::cout << "FS2: ";
     }else if(((currentFloor > callAtFloor) && currentMovingDirection > 0)||((currentFloor < callAtFloor) && currentMovingDirection < 0)){
         //the elevator car is already moving away from the landing call (the elevator is responding to some other call).
         FS = 1;
-       std::cout << "FS3: ";
+        //std::cout << "FS3: ";
     }else{
         FS = NUMBER_OF_FLOORS+1 - distanceToCaller;
-        std::cout << "FS4: ";
+        //std::cout << "FS4: ";
     }
     std::cout << std::endl;
     //std::cout << FS << std::endl;
@@ -172,21 +177,65 @@ int ElevatorStatus::figureOfSuitability(int callAtFloor,int callGoingToFloor) {
     return FS;
 }
 
+// *********************** Elevator max and min floor ********************
+
+std::pair<unsigned int,unsigned int> ElevatorStatus::getMaxAndMinFloorInQueue() {
+
+    //if the Queues are empty
+    if (!(pick_Up_Queue.size() > 0 || drop_Off_Queue.size() > 0)){
+        return std::make_pair(0,0);
+    }
+
+    unsigned int maxFloor = 0;
+    unsigned int minFloor = 0;
+
+    //Check pick-up Queue first
+    for (std::deque<std::pair<unsigned int,unsigned int> >::iterator it=pick_Up_Queue.begin(); it!=pick_Up_Queue.end(); ++it){
+        maxFloor = std::max(it->first,maxFloor);
+        minFloor = std::min(it->first,minFloor);
+    }
+
+    //Check drop-off Queue second
+    for (std::deque<unsigned int>::iterator it=drop_Off_Queue.begin(); it!=drop_Off_Queue.end(); ++it){
+
+        maxFloor = std::max(*it,maxFloor);
+        minFloor = std::min(*it,minFloor);
+    }
+
+        //Making sure we are within the constrained floors
+        /*
+        if (maxFloor > TOP_FLOOR){
+            maxFloor = TOP_FLOOR;
+        }else if(minFloor < TERMINAL_FLOOR){
+            minFloor = TERMINAL_FLOOR;
+        }
+    */
+
+
+        return std::make_pair(maxFloor,minFloor);
+}
 
 
 
 // ********************* ELEVATOR CONTROLLER ******************************
 
 
-void ElevatorStatus::ElevatorStateController() {
+void ElevatorStatus::ElevatorStateController(int elevatorID) {
+
+    //Print out position
+    std::cout << "Exact position of Elevator  " << elevatorID << ": " << exactElevatorPosition << std::endl;
+    std::cout << "Current floor of Elevator  " << elevatorID << ": " << currentFloor << std::endl;
+    std::cout << "Elevator " << elevatorID << " has " << pick_Up_Queue.size() << " waiting for pick-up" << std::endl;
+    std::cout << "Elevator " << elevatorID << " has " << drop_Off_Queue.size() << " waiting for drop-off" << std::endl;
+    std::cout << "Elevator " << elevatorID << " destination floor is " << destinationFloor << std::endl;
 
     //Calculate elevator position
-
     //If there is any request for the elevator, then move
+    //If not, stay idle
     if (pick_Up_Queue.size() > 0 || drop_Off_Queue.size() > 0) {
         exactElevatorPosition += travelDirection * (ELEVATOR_TRAVEL_SPEED * dt);
         currentFloor = floor(exactElevatorPosition);
-        std::cout << "ExactElevatorPosition: " << exactElevatorPosition << std::endl;
+
     }
 
     destinationFloor = 7;
@@ -206,9 +255,7 @@ void ElevatorStatus::ElevatorStateController() {
         //Check if current floor is queued
         for (std::deque<std::pair<unsigned int,unsigned int> >::iterator it=pick_Up_Queue.begin(); it!=pick_Up_Queue.end(); ++it) {
 
-            std::cout << "it->first: " << it->first << "it->second: " << it->second << std::endl;
-            std::cout << "pick up size: " << pick_Up_Queue.size() << "drop off size: " << drop_Off_Queue.size() << std::endl;
-
+            //std::cout << "it->first: " << it->first << "it->second: " << it->second << std::endl;
             if (it->first == currentFloor){
                 //If current floor is in the pick up Queue add to drop off Queue
                 //and then pop element from pick up Queue
@@ -217,20 +264,19 @@ void ElevatorStatus::ElevatorStateController() {
 
                 //Also add dwelling time for stopping at floor
                 totWaitingTime += ELEVATOR_DWELLTIME_AT_FLOOR*dt;
-                std::cout << "it->first: " << it->first << "it->second: " << it->second << std::endl;
-                std::cout << "totTime: " << totWaitingTime << std::endl;
-                std::cout << "Elevator picks up passenger at floor: " << currentFloor << std::endl;
+
+                std::cout << "Elevator " << elevatorID << " picks up passenger at floor: " << currentFloor << std::endl;
 
                 break; //leave for loop
 
             }//if
+            //std::cout << "inside for" << std::endl;
         }//for
-        std::cout << "out of for loop " << std::endl;
     }//if
 
     //check if current floor is in the drop off Queue
     if (drop_Off_Queue.size() > 0){
-        std::cout << "inside drop off" << std::endl;
+
         //Add up total travel times
         totTravelTime += drop_Off_Queue.size()*dt;
 
@@ -242,35 +288,24 @@ void ElevatorStatus::ElevatorStateController() {
                 //Visit is registered by removing element from queue
                 drop_Off_Queue.erase(it);
 
-                std::cout << "Elevator drops of passenger at floor" << currentFloor << std::endl;
+                std::cout << "Elevator " << elevatorID << " drops off passenger at floor: " << currentFloor << std::endl;
+                break; //leave for loop
             }
-            std::cout << "inside for" << std::endl;
+            //std::cout << "inside for" << std::endl;
         }
 
 
     }
 
-        /*
-        //elevator is travelling UP
-        if(travelDirection == UP){
 
-            int tempNextDestinationFloor;
-            //Find all queued floors in this direction
-            for (it=mydeque.begin(); it!=mydeque.end(); ++it) {
-                std::cout << ' ' << *it;
-
-                if(*it > currentFloor){
-                    tempNextDestinationFloor = *it;
-                }//if
-             }//for
+    /*********************** Choosing next destination floor *******************/
 
 
+    unsigned int maxFloor = getMaxAndMinFloorInQueue().first;
+    unsigned int minFloor = getMaxAndMinFloorInQueue().second;
 
-        }//if
-*/
-
-
-std::cout << "end of callback" << std::endl;
+    std::cout << "Elevator " << elevatorID << " maxFloor is " << maxFloor << std::endl;
+    std::cout << "Elevator " << elevatorID << " minFloor is " << minFloor << std::endl;
 
 
  }
@@ -288,7 +323,7 @@ void MasterElevator::getCurrentTime(const std_msgs::Float32::ConstPtr& subMsg){
 
 //callback function
 void MasterElevator::pickElevatorToHandleCall(const simulation::calls& subMsg) {
-std::cout << "pickelevatorCount" << std::endl;
+
     //New call
     bool newCall = subMsg.newCall;
     float time = subMsg.time;
@@ -298,7 +333,7 @@ std::cout << "pickelevatorCount" << std::endl;
     //std::cout << "Direction: " << direction << std::endl;
 
     if (newCall){
-    std::cout << "newcall" << std::endl;
+    //std::cout << "newcall" << std::endl;
         //Update total number of passengers
         totNrPassengersHandled++;
 
@@ -306,8 +341,8 @@ std::cout << "pickelevatorCount" << std::endl;
         int FS_E1 = Elevator1.figureOfSuitability(0,direction);
         int FS_E2 = Elevator2.figureOfSuitability(3,direction);
 
-        std::cout << "FS_E1: " << FS_E1 << std::endl;
-        std::cout << "FS_E2: " << FS_E2 << std::endl;
+        //std::cout << "FS_E1: " << FS_E1 << std::endl;
+        //std::cout << "FS_E2: " << FS_E2 << std::endl;
 
         //make queue pair
         std::pair<unsigned int,unsigned int> call;
@@ -326,8 +361,8 @@ std::cout << "pickelevatorCount" << std::endl;
     }//if
 
     //Update the state of the elevators;
-    Elevator1.ElevatorStateController();
-    Elevator2.ElevatorStateController();
+    Elevator1.ElevatorStateController(E1);
+    Elevator2.ElevatorStateController(E2);
 }
 
 
