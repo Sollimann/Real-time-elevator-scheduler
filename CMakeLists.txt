@@ -40,6 +40,10 @@ add_executable(master_elevator_nc src/master_elevator_nc.cpp)
 target_link_libraries(master_elevator_nc ${catkin_LIBRARIES})
 add_dependencies(master_elevator_nc simulation_generate_message_cpp)
 
+add_executable(master_elevator_fso src/master_elevator_fso.cpp)
+target_link_libraries(master_elevator_fso ${catkin_LIBRARIES})
+add_dependencies(master_elevator_fso simulation_generate_message_cpp)
+
 
 install(DIRECTORY launch
    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}

@@ -43,7 +43,6 @@ public:
     unsigned int destinationFloor;
     int travelDirection;
     bool idle;
-
     float totWaitingTime;
     float totTravelTime;
     float timeToNextDestinationFloor;
