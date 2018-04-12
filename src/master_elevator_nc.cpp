@@ -1,6 +1,5 @@
 #include "ros/ros.h"
 #include "std_msgs/String.h"
-//#include "armadillo"
 #include "deque"
 #include "simulation/calls.h"
 #include <ctime>
@@ -9,27 +8,33 @@
 #include <math.h>
 #include <algorithm>
 
-// ********************** DEFINE *********************** //
+/********************** DEFINE ************************/
+
 #define dt 0.1 // [s]
 #define ELEVATOR_TRAVEL_SPEED 0.5 // [floor/sec]
 #define ELEVATOR_DWELLTIME_AT_FLOOR 3 // [sec]
 #define NUMBER_OF_FLOORS 8 // [-]
 #define TOP_FLOOR 7 // [-]
 #define TERMINAL_FLOOR 0 // [-]
-enum{ UP = 1, DOWN = -1};
+
+/********************** ENUM **************************/
+
+enum{ UP = 1, DOWN = -1}; //Call direction
 enum{ E1 = 1, E2 = 2}; //ElevatorID
 
-// ********************** Global ************************ //
+/***************** GLOBAL VARIABLES *******************/
 
 float current_time;
 float totTravelTimeforPassengers = 0;
 float totWaitingTimeforPassengers = 0;
 float totNrPassengersHandled = 0;
 
+/************************ ELEVATOR CAR ****************************/
+/*************************** CLASS ********************************/
+// This class handles the elevator control of each separate elevator car
 
 class ElevatorStatus{
 
-//private:
 public:
 
     //Status variables
@@ -38,7 +43,7 @@ public:
     unsigned int destinationFloor;
     int travelDirection;
     bool idle;
-    //bool empty;
+
     float totWaitingTime;
     float totTravelTime;
     float timeToNextDestinationFloor;
@@ -56,12 +61,17 @@ public:
     //Finds max and min floor in queue
     std::pair<unsigned int,unsigned int> getMaxAndMinFloorInQueue();
 
-    //Elevator Queues
-    //std::deque<unsigned int> pick_Up_Queue;
+    //Elevator Ready Queues
     std::deque<std::pair<unsigned int,unsigned int> > pick_Up_Queue;
     std::deque<unsigned int> drop_Off_Queue;
 
 };
+
+/********************** THE MASTER ELEVATOR **************************/
+/******************************* CLASS *******************************/
+// This Class handles both elevators operating and includes the
+// logical algorithm for choosing which elevator car that should handle
+// a certain call.
 
 class MasterElevator{
 
@@ -71,45 +81,43 @@ private:
     ros::Subscriber sub_elevator_call;
     ros::Subscriber sub_clock;
 
-    //float timeLastCall;
-    //unsigned floorLastCall;
-    //int directionLastCall;
-
 public:
 
-    //MasterElevator(){timeLastCall = 0; floorLastCall = 0;directionLastCall = 1;}
+    //Constructor
     MasterElevator(ros::NodeHandle &nh);
+
+    //Class objects
     ElevatorStatus Elevator1;
     ElevatorStatus Elevator2;
 
-    //callback
+    //Callback functions at 10Hz
     void getCurrentTime(const std_msgs::Float32::ConstPtr& subMsg);
     void pickElevatorToHandleCall(const simulation::calls& subMsg);
 };
 
-// ************************ INITIALIZATION **************************** //
+/************************ INITIALIZATION ****************************/
 
 
 void ElevatorStatus::initializeElevator() {
+
     exactElevatorPosition = 0;
     currentFloor = 0;
     destinationFloor = 7;
     travelDirection = UP;
     idle = true;
-    //empty = true;
     totWaitingTime = 0;
     totTravelTime = 0;
 }
 
-// Constructor
+/************************* CONSTRUCTORS *****************************/
+
+//Constructing car object
 ElevatorStatus::ElevatorStatus(){
     initializeElevator();
 }
 
-// ******************************************************************** //
 
-//Constructor
-
+//Constructing Master Elevator object
 MasterElevator::MasterElevator(ros::NodeHandle &nh) {
 
     ElevatorStatus elev1;
@@ -122,7 +130,8 @@ MasterElevator::MasterElevator(ros::NodeHandle &nh) {
     sub_elevator_call = nh.subscribe("/publishCallMsg",1000,&MasterElevator::pickElevatorToHandleCall,this);
 }
 
-// ************************* ELEVATOR HANDLE LOGIC ******************
+/************************* THE IMPLEMENTED ALGORITHM  ****************************/
+/***************************** NEAREST CAR LOGIC *********************************/
 
 
 int ElevatorStatus::figureOfSuitability(int callAtFloor,int callGoingToFloor) {
@@ -162,7 +171,7 @@ int ElevatorStatus::figureOfSuitability(int callAtFloor,int callGoingToFloor) {
     return FS;
 }
 
-// *********************** Elevator max and min floor ********************
+/*********************** FIND MAX & MIN FLOOR IN QUEUES ********************/
 
 std::pair<unsigned int,unsigned int> ElevatorStatus::getMaxAndMinFloorInQueue() {
 
@@ -198,9 +207,11 @@ std::pair<unsigned int,unsigned int> ElevatorStatus::getMaxAndMinFloorInQueue() 
 
 
 
-// ********************* ELEVATOR CONTROLLER ******************************
 
-
+/************************ ELEVATOR CONTROLLER *************************/
+// This function handles the actual real-time control of the elevators
+// It handles both pick-up & drop-off of passengers, sets new destinations,
+// handles travelling between floors
 void ElevatorStatus::ElevatorStateController(int elevatorID) {
 
     /*
@@ -246,7 +257,7 @@ void ElevatorStatus::ElevatorStateController(int elevatorID) {
                     if (pick_Up_Queue.size() > 0) {
                         pick_Up_Queue.erase(it);
                     }else{
-                        break;
+                        break; //leave for-loop
                     }
 
                     //Also add dwelling time for stopping at floor
@@ -255,9 +266,8 @@ void ElevatorStatus::ElevatorStateController(int elevatorID) {
                     std::cout << "Elevator " << elevatorID << " picks up passenger at floor: " << currentFloor
                               << std::endl;
 
-                        break; //leave for loop
+                        break; //leave for-loop
                 }//if
-                //std::cout << "inside for" << std::endl;
             }//for
         }//if
 
@@ -285,18 +295,15 @@ void ElevatorStatus::ElevatorStateController(int elevatorID) {
                     //Break out of for loop if the queue is empty
                     if (drop_Off_Queue.size() == 0) {
                         break; //leave for loop
-                    }
-                }
-                //std::cout << "inside for" << std::endl;
-            }
+                    } //if
+                } //if
+            } //for
 
 
-        }
+        } //if
 
 
-
-        /*********************** Choosing next destination floor *******************/
-
+        /******************** CHOOSING NEXT DESTINATION FLOOR *******************/
         //Here we want to set: travelDirection and destination floor
 
         unsigned int maxFloor = getMaxAndMinFloorInQueue().first;
@@ -335,13 +342,15 @@ void ElevatorStatus::ElevatorStateController(int elevatorID) {
 
  }
 
+/******************************* SIMULATION ********************************/
+/*************************** CALLBACK FUNCTIONS ****************************/
 
-//callback function
+//Updates the global timing
 void MasterElevator::getCurrentTime(const std_msgs::Float32::ConstPtr& subMsg){
     current_time = subMsg->data;
 }
 
-//callback function
+//Handling of calls
 void MasterElevator::pickElevatorToHandleCall(const simulation::calls& subMsg) {
 
     //New call
@@ -384,7 +393,7 @@ void MasterElevator::pickElevatorToHandleCall(const simulation::calls& subMsg) {
     Elevator1.ElevatorStateController(E1);
     Elevator2.ElevatorStateController(E2);
 
-    // ************************ SIMULATION COMPLETES AT ****************************
+    /************************** SIMULATION COMPLETES AT *****************************/
 
     if(current_time > 60 && Elevator1.idle && Elevator2.idle){
         std::cout << "\n \n SIMULATION IS COMPLETE! \n \n" << std::endl;
@@ -410,7 +419,7 @@ void MasterElevator::pickElevatorToHandleCall(const simulation::calls& subMsg) {
 
 
 
-// ******************************* ROS specific*******************************//
+/******************************* ROS NODEHANDLE *******************************/
 
 int main(int argc, char** argv){
     ros::init(argc, argv, "master_elevator_nc");
