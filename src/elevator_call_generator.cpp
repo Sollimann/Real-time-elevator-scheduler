@@ -53,7 +53,7 @@ public:
 
 CallGenerator::CallGenerator(ros::NodeHandle &nh){
     arma::vec times;arma::vec floors;arma::vec directions;
-    times << 2.42 << 3.21 << 3.56 << 5.67 << 7.01 << 7.05 << 8.90 << 10.10 << 12.12 << 13.53 << 15.14 << arma::endr;
+    times << 2.42 << 8.21 << 13.56 << 25.67 << 27.01 << 32.05 << 38.90 << 45.10 << 52.12 << 57.53 << 63.14 << arma::endr;
     floors << TERMINAL << TERMINAL << 3 << 4 << TERMINAL << TOP << TOP << 2 << TERMINAL << 5 << TERMINAL << arma::endr;
     directions << TOP << 3 << TOP << 1 << TOP << TERMINAL << TERMINAL << TOP << TOP << TERMINAL << 5 << arma::endr;
 
