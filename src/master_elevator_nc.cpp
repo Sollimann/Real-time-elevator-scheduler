@@ -11,9 +11,9 @@
 
 // ********************** DEFINE *********************** //
 #define dt 0.1 // [s]
-#define ELEVATOR_TRAVEL_SPEED 1.0 // [floor/sec]
+#define ELEVATOR_TRAVEL_SPEED 0.5 // [floor/sec]
 #define ELEVATOR_DWELLTIME_AT_FLOOR 3 // [sec]
-#define NUMBER_OF_FLOORS // [-]
+#define NUMBER_OF_FLOORS 8 // [-]
 #define TOP_FLOOR 7 // [-]
 #define TERMINAL_FLOOR 0 // [-]
 enum{ UP = 1, DOWN = -1};
@@ -360,8 +360,8 @@ void MasterElevator::pickElevatorToHandleCall(const simulation::calls& subMsg) {
         std::cout << "Passengers: " << totNrPassengersHandled << std::endl;
 
         //Calculate Figure of Suitability for both elevatorhs
-        int FS_E1 = Elevator1.figureOfSuitability(0,direction);
-        int FS_E2 = Elevator2.figureOfSuitability(3,direction);
+        int FS_E1 = Elevator1.figureOfSuitability(floor,direction);
+        int FS_E2 = Elevator2.figureOfSuitability(floor,direction);
 
         //std::cout << "FS_E1: " << FS_E1 << std::endl;
         //std::cout << "FS_E2: " << FS_E2 << std::endl;
@@ -386,17 +386,21 @@ void MasterElevator::pickElevatorToHandleCall(const simulation::calls& subMsg) {
 
     // ************************ SIMULATION COMPLETES AT ****************************
 
-    if(current_time > 30 && Elevator1.idle && Elevator2.idle){
+    if(current_time > 60 && Elevator1.idle && Elevator2.idle){
         std::cout << "\n \n SIMULATION IS COMPLETE! \n \n" << std::endl;
         std::cout << "STATISTICS: \n" << std::endl;
 
+        std::cout << "Clock at completion: " << current_time << std::endl;
         std::cout << "Total number of passengers handled: " << totNrPassengersHandled << std::endl;
         std::cout << "Total waiting time for all passengers combined: " << totWaitingTimeforPassengers << std::endl;
         std::cout << "Total travel time for all passngers combined: " << totTravelTimeforPassengers << std::endl;
+        std::cout << "Total response time for all passengers combined: " << (totTravelTimeforPassengers + totWaitingTimeforPassengers) << std::endl;
         std::cout << "\n \n";
 
+        std::cout << "Average travel time: " << totTravelTimeforPassengers/totNrPassengersHandled << std::endl;
+        std::cout << "Average response " << (totTravelTimeforPassengers + totWaitingTimeforPassengers)/totNrPassengersHandled << std::endl;
+        std::cout << "RESULT OF OBJECTIVE FUNCTION: \n \n";
         std::cout << "Average waiting time: " << totWaitingTimeforPassengers/totNrPassengersHandled << std::endl;
-        std::cout << "Average travel Time: " << totTravelTimeforPassengers/totNrPassengersHandled << std::endl;
 
 
         ros::shutdown();
