@@ -85,6 +85,9 @@ public:
     //Constructor
     MasterElevator(ros::NodeHandle &nh);
 
+    //Fixed sectoring algorithm
+    int fixedSectoring(int callAtFloor,int callGoingToFloor);
+
     //Class objects
     ElevatorStatus Elevator1;
     ElevatorStatus Elevator2;
@@ -132,45 +135,20 @@ MasterElevator::MasterElevator(ros::NodeHandle &nh) {
     sub_elevator_call = nh.subscribe("/publishCallMsg",1000,&MasterElevator::pickElevatorToHandleCall,this);
 }
 
-/************************* THE IMPLEMENTED ALGORITHM  ****************************/
-/***************************** NEAREST CAR LOGIC *********************************/
+/**************************** THE IMPLEMENTED ALGORITHM  ****************************/
+/******************************* FSO FIXED SECTORING ********************************/
 
 
-int ElevatorStatus::figureOfSuitability(int callAtFloor,int callGoingToFloor) {
+int MasterElevator::fixedSectoring(int callAtFloor,int callGoingToFloor) {
 
-    //Figure of suitability
-    int FS;
+    //int directionOfCall = callGoingToFloor - callAtFloor;
+    //int currentMovingDirection = destinationFloor - currentFloor;
 
-    int directionOfCall = callGoingToFloor - callAtFloor;
-    int currentMovingDirection = destinationFloor - currentFloor;
-    int distanceToCaller = callAtFloor - currentFloor;
-    distanceToCaller = abs(distanceToCaller);
+    
 
-    //std::cout << "directionOfCall: " << directionOfCall << std::endl;
-    //std::cout << "currentMovingDirection: " << currentMovingDirection << std::endl;
-    //std::cout << "distanceToCaller: " << distanceToCaller << std::endl;
-    //std::cout << "currentFloor: " << currentFloor << std::endl;
 
-    if ((currentMovingDirection > 0 && directionOfCall > 0) || (currentMovingDirection < 0 && directionOfCall < 0)){
-        //the elevator car is moving towards the landing call and the call is set in the same direction.
-        FS = NUMBER_OF_FLOORS + 1 - (distanceToCaller-1);
-        //std::cout << "FS1: ";
-    }else if((currentMovingDirection < 0 && directionOfCall > 0) || (currentMovingDirection > 0 && directionOfCall < 0) ){
-        //the elevator car is moving towards the landing call but the call is set to the opposite direction.
-        FS = NUMBER_OF_FLOORS + 1 - distanceToCaller;
-        //std::cout << "FS2: ";
-    }else if(((currentFloor > callAtFloor) && currentMovingDirection > 0)||((currentFloor < callAtFloor) && currentMovingDirection < 0)){
-        //the elevator car is already moving away from the landing call (the elevator is responding to some other call).
-        FS = 1;
-        //std::cout << "FS3: ";
-    }else{
-        FS = NUMBER_OF_FLOORS+1 - distanceToCaller;
-        //std::cout << "FS4: ";
-    }
-    std::cout << std::endl;
-    //std::cout << FS << std::endl;
 
-    return FS;
+    return 0;
 }
 
 /*********************** FIND MAX & MIN FLOOR IN QUEUES ********************/
@@ -243,7 +221,7 @@ void ElevatorStatus::ElevatorStateController(int elevatorID) {
             totWaitingTimeforPassengers += pick_Up_Queue.size() * dt;
 
             //std::cout << "totWaitingTime elev: " << totWaitingTime << std::endl;
-            //std::cout << "WAITING: " << totWaitingTimeforPassengers << std::endl;
+            std::cout << "WAITING: " << totWaitingTimeforPassengers << std::endl;
 
             //Check if current floor is queued
             for (std::deque<std::pair<unsigned int, unsigned int> >::iterator it = pick_Up_Queue.begin();
@@ -265,7 +243,8 @@ void ElevatorStatus::ElevatorStateController(int elevatorID) {
                     //Also add dwelling time for stopping at floor
                     totWaitingTime += ELEVATOR_DWELLTIME_AT_FLOOR * dt;
 
-                    //std::cout << "Elevator " << elevatorID << " picks up passenger at floor: " << currentFloor << std::endl;
+                    std::cout << "Elevator " << elevatorID << " picks up passenger at floor: " << currentFloor
+                              << std::endl;
 
                         break; //leave for-loop
                 }//if
@@ -280,7 +259,7 @@ void ElevatorStatus::ElevatorStateController(int elevatorID) {
             totTravelTimeforPassengers += drop_Off_Queue.size() * dt;
 
             //std::cout << "totalTravelTime elev: " << totTravelTime << std::endl;
-            //std::cout << "TRAVEL: " << totTravelTimeforPassengers << std::endl;
+            std::cout << "TRAVEL: " << totTravelTimeforPassengers << std::endl;
 
             //Check if current floor is queued
             for (std::deque<unsigned int>::iterator it = drop_Off_Queue.begin(); it != drop_Off_Queue.end(); ++it) {
@@ -290,7 +269,8 @@ void ElevatorStatus::ElevatorStateController(int elevatorID) {
                     //Visit is registered by removing element from queue
                     drop_Off_Queue.erase(it);
 
-                    //std::cout << "Elevator " << elevatorID << " drops off passenger at floor: " << currentFloor << std::endl;
+                    std::cout << "Elevator " << elevatorID << " drops off passenger at floor: " << currentFloor
+                              << std::endl;
 
                     //Break out of for loop if the queue is empty
                     if (drop_Off_Queue.size() == 0) {
@@ -342,7 +322,6 @@ void ElevatorStatus::ElevatorStateController(int elevatorID) {
 
  }
 
-
 /******************************* SIMULATION ********************************/
 /*************************** CALLBACK FUNCTIONS ****************************/
 
@@ -387,7 +366,6 @@ void MasterElevator::print(int E1, int E2,int E1size, int E2size) {
 
 }
 
-
 //Updates the global timing
 void MasterElevator::getCurrentTime(const std_msgs::Float32::ConstPtr& subMsg){
     current_time = subMsg->data;
@@ -409,27 +387,20 @@ void MasterElevator::pickElevatorToHandleCall(const simulation::calls& subMsg) {
         //Update total number of passengers
         totNrPassengersHandled++;
 
-        //std::cout << "Passengers: " << totNrPassengersHandled << std::endl;
-
-        //Calculate Figure of Suitability for both elevatorhs
-        int FS_E1 = Elevator1.figureOfSuitability(floor,direction);
-        int FS_E2 = Elevator2.figureOfSuitability(floor,direction);
-
-        //std::cout << "FS_E1: " << FS_E1 << std::endl;
-        //std::cout << "FS_E2: " << FS_E2 << std::endl;
+        std::cout << "Passengers: " << totNrPassengersHandled << std::endl;
 
         //make queue pair
         std::pair<unsigned int,unsigned int> call;
         call = std::make_pair(floor, direction);
 
-
-        //Largest Figure of suitability get the call
-        if (FS_E1 >= FS_E2){
+        //Find elevator responsible for this sector
+        int elevatorID = fixedSectoring(floor,direction);
+        //Elevator responsible of requested sector gets the call
+        if (elevatorID == E1){
             Elevator1.pick_Up_Queue.push_back(call);
         }else{
             Elevator2.pick_Up_Queue.push_back(call);
         }
-
     }//if
 
     /************************** Print *****************************/
@@ -469,7 +440,7 @@ void MasterElevator::pickElevatorToHandleCall(const simulation::calls& subMsg) {
 /******************************* ROS NODEHANDLE *******************************/
 
 int main(int argc, char** argv){
-    ros::init(argc, argv, "master_elevator_nc");
+    ros::init(argc, argv, "master_elevator_fso");
     ros::NodeHandle nh;
     MasterElevator M(nh);
 
