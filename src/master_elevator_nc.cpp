@@ -19,7 +19,12 @@
 enum{ UP = 1, DOWN = -1};
 enum{ E1 = 1, E2 = 2}; //ElevatorID
 
+// ********************** Global ************************ //
 
+float current_time;
+float totTravelTimeforPassengers = 0;
+float totWaitingTimeforPassengers = 0;
+float totNrPassengersHandled = 0;
 
 
 class ElevatorStatus{
@@ -31,10 +36,8 @@ public:
     double exactElevatorPosition;
     unsigned int currentFloor;
     unsigned int destinationFloor;
-    unsigned int nrPassengersInElevator;
-    unsigned int totNrPassengersHandled;
     int travelDirection;
-    //bool idle;
+    bool idle;
     //bool empty;
     float totWaitingTime;
     float totTravelTime;
@@ -68,13 +71,11 @@ private:
     ros::Subscriber sub_elevator_call;
     ros::Subscriber sub_clock;
 
-    float timeLastCall;
-    unsigned floorLastCall;
-    int directionLastCall;
+    //float timeLastCall;
+    //unsigned floorLastCall;
+    //int directionLastCall;
 
 public:
-
-    int totNrPassengersHandled;
 
     //MasterElevator(){timeLastCall = 0; floorLastCall = 0;directionLastCall = 1;}
     MasterElevator(ros::NodeHandle &nh);
@@ -88,24 +89,13 @@ public:
 
 // ************************ INITIALIZATION **************************** //
 
-// ********************** Global ************************ //
-
-//global time
-float current_time;
-
-//create two elevator objects
-//ElevatorStatus Elevator1;
-//ElevatorStatus Elevator2;
-//MasterElevator Master;
 
 void ElevatorStatus::initializeElevator() {
     exactElevatorPosition = 0;
     currentFloor = 0;
     destinationFloor = 7;
-    nrPassengersInElevator = 0;
-    //totNrPassengersHandled = 0;
     travelDirection = UP;
-    //idle = true;
+    idle = true;
     //empty = true;
     totWaitingTime = 0;
     totTravelTime = 0;
@@ -126,12 +116,6 @@ MasterElevator::MasterElevator(ros::NodeHandle &nh) {
     ElevatorStatus elev2;
     Elevator1 = elev1;
     Elevator2 = elev2;
-
-    timeLastCall = 0;
-    floorLastCall = 0;
-    directionLastCall = 1;
-
-    totNrPassengersHandled = 0;
 
     //initialize subscribers
     sub_clock = nh.subscribe("/clock",1000,&MasterElevator::getCurrentTime,this);
@@ -219,6 +203,7 @@ std::pair<unsigned int,unsigned int> ElevatorStatus::getMaxAndMinFloorInQueue() 
 
 void ElevatorStatus::ElevatorStateController(int elevatorID) {
 
+    /*
     //Print out position
     std::cout << "Exact position of Elevator  " << elevatorID << ": " << exactElevatorPosition << std::endl;
     std::cout << "Current floor of Elevator  " << elevatorID << ": " << currentFloor << std::endl;
@@ -226,29 +211,26 @@ void ElevatorStatus::ElevatorStateController(int elevatorID) {
     std::cout << "Elevator " << elevatorID << " has " << drop_Off_Queue.size() << " waiting for drop-off" << std::endl;
     std::cout << "Elevator " << elevatorID << " destination floor is " << destinationFloor << std::endl;
     std::cout << "Elevator " << elevatorID << " travel Direction is " << travelDirection << std::endl;
-    //Calculate elevator position
+    */
+        //Calculate elevator position
     //If there is any request for the elevator, then move
     //If not, stay idle
     if (pick_Up_Queue.size() > 0 || drop_Off_Queue.size() > 0) {
+        idle = false;
         exactElevatorPosition += travelDirection * (ELEVATOR_TRAVEL_SPEED * dt);
         currentFloor = floor(exactElevatorPosition);
 
 
-
-        /*
-        destinationFloor = 7;
-
-        if (currentFloor == 7){
-            destinationFloor = 1;
-        }
-    */
         //Check if current floor is in the pick up Queue
 
         if (pick_Up_Queue.size() > 0) {
 
             //Add up total waiting time
-            totWaitingTime += pick_Up_Queue.size() * dt;
+            //totWaitingTime += pick_Up_Queue.size() * dt;
+            totWaitingTimeforPassengers += pick_Up_Queue.size() * dt;
 
+            //std::cout << "totWaitingTime elev: " << totWaitingTime << std::endl;
+            std::cout << "WAITING: " << totWaitingTimeforPassengers << std::endl;
 
             //Check if current floor is queued
             for (std::deque<std::pair<unsigned int, unsigned int> >::iterator it = pick_Up_Queue.begin();
@@ -259,7 +241,13 @@ void ElevatorStatus::ElevatorStateController(int elevatorID) {
                     //If current floor is in the pick up Queue add to drop off Queue
                     //and then pop element from pick up Queue
                     drop_Off_Queue.push_back(it->second);
-                    pick_Up_Queue.erase(it);
+
+                    //Break out of for-loop if the queue is empty
+                    if (pick_Up_Queue.size() > 0) {
+                        pick_Up_Queue.erase(it);
+                    }else{
+                        break;
+                    }
 
                     //Also add dwelling time for stopping at floor
                     totWaitingTime += ELEVATOR_DWELLTIME_AT_FLOOR * dt;
@@ -267,8 +255,7 @@ void ElevatorStatus::ElevatorStateController(int elevatorID) {
                     std::cout << "Elevator " << elevatorID << " picks up passenger at floor: " << currentFloor
                               << std::endl;
 
-                    break; //leave for loop
-
+                        break; //leave for loop
                 }//if
                 //std::cout << "inside for" << std::endl;
             }//for
@@ -278,7 +265,11 @@ void ElevatorStatus::ElevatorStateController(int elevatorID) {
         if (drop_Off_Queue.size() > 0) {
 
             //Add up total travel times
-            totTravelTime += drop_Off_Queue.size() * dt;
+            //totTravelTime += drop_Off_Queue.size() * dt;
+            totTravelTimeforPassengers += drop_Off_Queue.size() * dt;
+
+            //std::cout << "totalTravelTime elev: " << totTravelTime << std::endl;
+            std::cout << "TRAVEL: " << totTravelTimeforPassengers << std::endl;
 
             //Check if current floor is queued
             for (std::deque<unsigned int>::iterator it = drop_Off_Queue.begin(); it != drop_Off_Queue.end(); ++it) {
@@ -290,13 +281,18 @@ void ElevatorStatus::ElevatorStateController(int elevatorID) {
 
                     std::cout << "Elevator " << elevatorID << " drops off passenger at floor: " << currentFloor
                               << std::endl;
-                    break; //leave for loop
+
+                    //Break out of for loop if the queue is empty
+                    if (drop_Off_Queue.size() == 0) {
+                        break; //leave for loop
+                    }
                 }
                 //std::cout << "inside for" << std::endl;
             }
 
 
         }
+
 
 
         /*********************** Choosing next destination floor *******************/
@@ -306,8 +302,8 @@ void ElevatorStatus::ElevatorStateController(int elevatorID) {
         unsigned int maxFloor = getMaxAndMinFloorInQueue().first;
         unsigned int minFloor = getMaxAndMinFloorInQueue().second;
 
-        std::cout << "Elevator " << elevatorID << " maxFloor is " << maxFloor << std::endl;
-        std::cout << "Elevator " << elevatorID << " minFloor is " << minFloor << std::endl;
+        //std::cout << "Elevator " << elevatorID << " maxFloor is " << maxFloor << std::endl;
+        //std::cout << "Elevator " << elevatorID << " minFloor is " << minFloor << std::endl;
 
         //Upward riding logic
         if ((maxFloor > currentFloor) && travelDirection == UP) {
@@ -331,11 +327,13 @@ void ElevatorStatus::ElevatorStateController(int elevatorID) {
         }
 
 
+        //If elevator has no calls in queue
+        //Then it is idle
+    }else{
+        idle = true;
     }
 
  }
-
-
 
 
 //callback function
@@ -355,16 +353,18 @@ void MasterElevator::pickElevatorToHandleCall(const simulation::calls& subMsg) {
     //std::cout << "Direction: " << direction << std::endl;
 
     if (newCall){
-    //std::cout << "newcall" << std::endl;
+
         //Update total number of passengers
         totNrPassengersHandled++;
+
+        std::cout << "Passengers: " << totNrPassengersHandled << std::endl;
 
         //Calculate Figure of Suitability for both elevatorhs
         int FS_E1 = Elevator1.figureOfSuitability(0,direction);
         int FS_E2 = Elevator2.figureOfSuitability(3,direction);
 
-        std::cout << "FS_E1: " << FS_E1 << std::endl;
-        std::cout << "FS_E2: " << FS_E2 << std::endl;
+        //std::cout << "FS_E1: " << FS_E1 << std::endl;
+        //std::cout << "FS_E2: " << FS_E2 << std::endl;
 
         //make queue pair
         std::pair<unsigned int,unsigned int> call;
@@ -374,10 +374,8 @@ void MasterElevator::pickElevatorToHandleCall(const simulation::calls& subMsg) {
         //Largest Figure of suitability get the call
         if (FS_E1 >= FS_E2){
             Elevator1.pick_Up_Queue.push_back(call);
-            //Elevator1.drop_Off_Queue.push_back(direction);
         }else{
             Elevator2.pick_Up_Queue.push_back(call);
-            //Elevator2.drop_Off_Queue.push_back(direction);
         }
 
     }//if
@@ -385,7 +383,27 @@ void MasterElevator::pickElevatorToHandleCall(const simulation::calls& subMsg) {
     //Update the state of the elevators;
     Elevator1.ElevatorStateController(E1);
     Elevator2.ElevatorStateController(E2);
+
+    // ************************ SIMULATION COMPLETES AT ****************************
+
+    if(current_time > 30 && Elevator1.idle && Elevator2.idle){
+        std::cout << "\n \n SIMULATION IS COMPLETE! \n \n" << std::endl;
+        std::cout << "STATISTICS: \n" << std::endl;
+
+        std::cout << "Total number of passengers handled: " << totNrPassengersHandled << std::endl;
+        std::cout << "Total waiting time for all passengers combined: " << totWaitingTimeforPassengers << std::endl;
+        std::cout << "Total travel time for all passngers combined: " << totTravelTimeforPassengers << std::endl;
+        std::cout << "\n \n";
+
+        std::cout << "Average waiting time: " << totWaitingTimeforPassengers/totNrPassengersHandled << std::endl;
+        std::cout << "Average travel Time: " << totTravelTimeforPassengers/totNrPassengersHandled << std::endl;
+
+
+        ros::shutdown();
+        //to only print once
+    }
 }
+
 
 
 // ******************************* ROS specific*******************************//
