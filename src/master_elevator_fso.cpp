@@ -137,7 +137,7 @@ MasterElevator::MasterElevator(ros::NodeHandle &nh) {
     Elevator1.exactElevatorPosition = 0;
     Elevator1.currentFloor = 0;
     Elevator2.assignedSector = 2;
-    Elevator2.exactElevatorPosition = 0;
+    Elevator2.exactElevatorPosition = 4;
     Elevator2.currentFloor = 4;
 
 
@@ -181,24 +181,40 @@ int MasterElevator::fixedSectoring(int callAtFloor,int callGoingToFloor) {
 
     //The call is responsibility of sector 1 and elevator 1 is currently in that sector
     if(Elevator1.assignedSector == callSector) {
-
         if (Elevator1.currentlyInSector == Elevator1.assignedSector) {
             return E1;
-        } else if (Elevator1.currentlyInSector != Elevator1.assignedSector
-                   && Elevator1.travelDirection == DOWN) {
-            return E1;
-        }
-    }else{
 
+            //if Elevator is currently not in its assigned sector
+        } else if (Elevator1.currentlyInSector != Elevator1.assignedSector){
+
+                //If elevator is travelling towards it sector
+                if(Elevator1.travelDirection == DOWN){
+                    return E1;}
+                //if travelling away from its sector
+                else{
+                    return E2;}
+        }
+
+    //The call is responsibility of sector 2 and elevator is currently in that sector
+    }else {
         if (Elevator2.currentlyInSector == Elevator2.assignedSector) {
             return E2;
-        } else if (Elevator2.currentlyInSector != Elevator2.assignedSector
-                   && Elevator2.travelDirection == UP) {
-            return E2;
+
+            //if Elevator is currently not in its assigned sector
+        } else if (Elevator2.currentlyInSector != Elevator2.assignedSector) {
+
+            //If elevator is travelling towards it sector
+            if (Elevator2.travelDirection == UP) {
+                return E2;
+                //if travelling away from its sector
+            } else {
+                return E1;
+            }
         }
     }
 
-    //if none of the above is right, return callsector
+    //if none of the above is right
+    //then call is handled by the elevator responsible of that sector
     return callSector;
 }
 
