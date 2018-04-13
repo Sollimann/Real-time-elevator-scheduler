@@ -122,6 +122,7 @@ ElevatorStatus::ElevatorStatus(){
 //Constructing Master Elevator object
 MasterElevator::MasterElevator(ros::NodeHandle &nh) {
 
+    //Creating two elevator car objects
     ElevatorStatus elev1;
     ElevatorStatus elev2;
     Elevator1 = elev1;
@@ -141,9 +142,9 @@ int ElevatorStatus::figureOfSuitability(int callAtFloor,int callGoingToFloor) {
     //Figure of suitability
     int FS;
 
-    int directionOfCall = callGoingToFloor - callAtFloor;
-    int currentMovingDirection = destinationFloor - currentFloor;
-    int distanceToCaller = callAtFloor - currentFloor;
+    int directionOfCall = callGoingToFloor - callAtFloor; //If this number is > 0, call is UP
+    int currentMovingDirection = destinationFloor - currentFloor; //If this number is > 0, elevator is moving up
+    int distanceToCaller = callAtFloor - currentFloor; //floors between current floor and floor of call
     distanceToCaller = abs(distanceToCaller);
 
     //std::cout << "directionOfCall: " << directionOfCall << std::endl;
@@ -247,7 +248,7 @@ void ElevatorStatus::ElevatorStateController(int elevatorID) {
 
             //Check if current floor is queued
             for (std::deque<std::pair<unsigned int, unsigned int> >::iterator it = pick_Up_Queue.begin();
-                 it != pick_Up_Queue.end(); ++it) {
+                 it != pick_Up_Queue.end(); it++) {
 
                 //std::cout << "it->first: " << it->first << "it->second: " << it->second << std::endl;
                 if (it->first == currentFloor) {
@@ -283,7 +284,7 @@ void ElevatorStatus::ElevatorStateController(int elevatorID) {
             //std::cout << "TRAVEL: " << totTravelTimeforPassengers << std::endl;
 
             //Check if current floor is queued
-            for (std::deque<unsigned int>::iterator it = drop_Off_Queue.begin(); it != drop_Off_Queue.end(); ++it) {
+            for (std::deque<unsigned int>::iterator it = drop_Off_Queue.begin(); it != drop_Off_Queue.end(); it++) {
 
                 if (*it == currentFloor) {
 
