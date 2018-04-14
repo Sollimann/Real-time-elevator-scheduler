@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-Linux distributions such as Wily (Ubuntu 15.10), Xenial (Ubuntu 16.04) and Jessie (Debian 8)
+Linux distributions such as Wily (Ubuntu 15.10), Xenial (Ubuntu 16.04) and Jessie (Debian 8)<br />
 C++ 11 compiler or newer
 
 ## 1. Install ROS kinetic for Ubuntu (If you do not have it already) ##
@@ -16,12 +16,14 @@ Robot operating system (ROS) provides services designed for heterogeneous comput
 
 1. Setup your computer to accept software from packages.ros.org.
 	```bash
-	$ sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+	$ sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc)
+	main" > /etc/apt/sources.list.d/ros-latest.list'
 	```
 
 2. Set up your keys
 	```bash
-	$ sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key 421C365BD9FF1F717815A3895523BAEEB01FA116
+	$ sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80
+	--recv-key421C365BD9FF1F717815A3895523BAEEB01FA116
 	```
 
 3. Update
