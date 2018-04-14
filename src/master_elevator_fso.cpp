@@ -261,16 +261,7 @@ std::pair<unsigned int,unsigned int> ElevatorStatus::getMaxAndMinFloorInQueue() 
 // handles travelling between floors
 void ElevatorStatus::ElevatorStateController(int elevatorID) {
 
-    /*
-    //Print out position
-    std::cout << "Exact position of Elevator  " << elevatorID << ": " << exactElevatorPosition << std::endl;
-    std::cout << "Current floor of Elevator  " << elevatorID << ": " << currentFloor << std::endl;
-    std::cout << "Elevator " << elevatorID << " has " << pick_Up_Queue.size() << " waiting for pick-up" << std::endl;
-    std::cout << "Elevator " << elevatorID << " has " << drop_Off_Queue.size() << " waiting for drop-off" << std::endl;
-    std::cout << "Elevator " << elevatorID << " destination floor is " << destinationFloor << std::endl;
-    std::cout << "Elevator " << elevatorID << " travel Direction is " << travelDirection << std::endl;
-    */
-        //Calculate elevator position
+    //Calculate elevator position
     //If there is any request for the elevator, then move
     //If not, stay idle
     if (pick_Up_Queue.size() > 0 || drop_Off_Queue.size() > 0) {
@@ -278,28 +269,22 @@ void ElevatorStatus::ElevatorStateController(int elevatorID) {
         exactElevatorPosition += travelDirection * (ELEVATOR_TRAVEL_SPEED * dt);
         currentFloor = floor(exactElevatorPosition);
 
-
         //Check if current floor is in the pick up Queue
 
         if (pick_Up_Queue.size() > 0) {
 
             //Add up total waiting time
-            //totWaitingTime += pick_Up_Queue.size() * dt;
             totWaitingTimeforPassengers += pick_Up_Queue.size() * dt;
-
-            //std::cout << "totWaitingTime elev: " << totWaitingTime << std::endl;
-            //std::cout << "WAITING: " << totWaitingTimeforPassengers << std::endl;
 
             //Check if current floor is queued
             for (std::deque<std::pair<unsigned int, unsigned int> >::iterator it = pick_Up_Queue.begin();
                  it < pick_Up_Queue.end(); it++) {
 
-                std::cout << "it->first: " << it->first << "it->second: " << it->second << std::endl;
                 if (it->first == currentFloor) {
                     //If current floor is in the pick up Queue add to drop off Queue
                     //and then pop element from pick up Queue
                     drop_Off_Queue.push_back(it->second);
-                    std::cout << "put in drop off queue for elevator: " << elevatorID << std::endl;
+
                     //Break out of for-loop if the queue is empty
                     if (pick_Up_Queue.size() > 0) {
                         pick_Up_Queue.erase(it);
@@ -310,13 +295,8 @@ void ElevatorStatus::ElevatorStateController(int elevatorID) {
                     //Also add dwelling time for stopping at floor
                     totWaitingTime += ELEVATOR_DWELLTIME_AT_FLOOR * dt;
 
-                    std::cout << "Elevator " << elevatorID << " picks up passenger at floor: " << currentFloor
-                              << std::endl;
-
-                        break; //leave for-loop
                 }//if
-                std::cout << "inside for pick up for" << elevatorID << std::endl;
-                std::cout << "size of elevator pick up queue " << pick_Up_Queue.size() << std::endl;
+
             }//for
         }//if
 
@@ -324,41 +304,23 @@ void ElevatorStatus::ElevatorStateController(int elevatorID) {
         if (drop_Off_Queue.size() > 0) {
 
             //Add up total travel times
-            //totTravelTime += drop_Off_Queue.size() * dt;
             totTravelTimeforPassengers += drop_Off_Queue.size() * dt;
 
-            //std::cout << "totalTravelTime elev: " << totTravelTime << std::endl;
-            std::cout << "TRAVEL: " << totTravelTimeforPassengers << std::endl;
-
-
-            int count = 0;
             //Check if current floor is queued
             for (std::deque<unsigned int>::iterator it = drop_Off_Queue.begin(); it < drop_Off_Queue.end(); it++) {
-                count++;
                 if (drop_Off_Queue.size() <= 0) {
                     break; //leave for loop
-                    //}else if(count > 20){
-                    //    break;
-                    //
+
                 }
+
                 if (*it == currentFloor) {
 
                     //Visit is registered by removing element from queue
                     if(drop_Off_Queue.size()>0) {
                         drop_Off_Queue.erase(it);
                     }
-
-                    std::cout << "Elevator " << elevatorID << " drops off passenger at floor: " << currentFloor
-                              << std::endl;
                 } //if
-                std::cout << "inside for drop off for "<< elevatorID << std::endl;
-
-                //Break out of for loop if the queue is empty
-
-                std::cout << "Size of elevator drop off queue: " << drop_Off_Queue.size() << std::endl;
             } //for
-
-
         } //if
 
 
@@ -368,8 +330,6 @@ void ElevatorStatus::ElevatorStateController(int elevatorID) {
         unsigned int maxFloor = getMaxAndMinFloorInQueue().first;
         unsigned int minFloor = getMaxAndMinFloorInQueue().second;
 
-        //std::cout << "Elevator " << elevatorID << " maxFloor is " << maxFloor << std::endl;
-        //std::cout << "Elevator " << elevatorID << " minFloor is " << minFloor << std::endl;
 
         //Upward riding logic
         if ((maxFloor > currentFloor) && travelDirection == UP) {
@@ -459,14 +419,10 @@ void MasterElevator::pickElevatorToHandleCall(const simulation::calls& subMsg) {
     unsigned int floor = subMsg.floor;
     int direction = subMsg.direction;
 
-    //std::cout << "Direction: " << direction << std::endl;
-
     if (newCall){
 
         //Update total number of passengers
         totNrPassengersHandled++;
-
-        //std::cout << "Passengers: " << totNrPassengersHandled << std::endl;
 
         //make queue pair
         std::pair<unsigned int,unsigned int> call;
@@ -474,15 +430,12 @@ void MasterElevator::pickElevatorToHandleCall(const simulation::calls& subMsg) {
 
         //Find elevator responsible for this sector
         int elevatorID = fixedSectoring(floor,direction);
-        std::cout << "ElevatorID: " << elevatorID << std::endl;
 
         //Elevator responsible of requested sector gets the call
         if (elevatorID == E1){
             Elevator1.pick_Up_Queue.push_back(call);
-            std::cout << "Elevator 1 gets the call! " << std::endl;
         }else{
             Elevator2.pick_Up_Queue.push_back(call);
-            std::cout << "Elevator 2 gets the call! " << std::endl;
         }
     }//if
 
@@ -496,14 +449,14 @@ void MasterElevator::pickElevatorToHandleCall(const simulation::calls& subMsg) {
 
     /************************** SIMULATION COMPLETES AT *****************************/
 
-    if(current_time > 60 && Elevator1.idle && Elevator2.idle){
+    if(totNrPassengersHandled == 20 && Elevator1.idle && Elevator2.idle){
         std::cout << "\n \n SIMULATION IS COMPLETE! \n \n" << std::endl;
         std::cout << "STATISTICS: \n" << std::endl;
 
         std::cout << "Clock at completion: " << current_time << std::endl;
         std::cout << "Total number of passengers handled: " << totNrPassengersHandled << std::endl;
         std::cout << "Total waiting time for all passengers combined: " << totWaitingTimeforPassengers << std::endl;
-        std::cout << "Total travel time for all passngers combined: " << totTravelTimeforPassengers << std::endl;
+        std::cout << "Total travel time for all passengers combined: " << totTravelTimeforPassengers << std::endl;
         std::cout << "Total response time for all passengers combined: " << (totTravelTimeforPassengers + totWaitingTimeforPassengers) << std::endl;
         std::cout << "\n \n";
 
