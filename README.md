@@ -80,22 +80,22 @@ Linux distributions such as Wily (Ubuntu 15.10), Xenial (Ubuntu 16.04) and Jessi
 	```bash
 	~/rts_simulation_ws$ catkin_make
 	```
-  1. Enter the folder where you want to clone the repostory:
+4. Enter the folder where you want to clone the repostory:
 	```bash
 	$ cd rts_simulation_ws/src
 	```
   
-4. Open a new window and run ROS: 
+5. Open a new window and run ROS: 
 	```bash
 	$ roscore
 	```
 
-3. Open a third window and and run the first algorithm. (this will not publish anything at first):
+6. Open a third window and and run the first algorithm. (this will not publish anything at first):
 	```bash
 	$ rosrun simulation master_elevator_nc
 	```
   
-4. Open a fourth window and and run the second algorithm. (this will not publish anything at first):
+7. Open a fourth window and and run the second algorithm. (this will not publish anything at first):
 	```bash
 	$ rosrun simulation master_elevator_fso
 	```
