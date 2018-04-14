@@ -29,12 +29,12 @@ include
   ${catkin_INCLUDE_DIRS}
 )
 
-
+add_compile_options(-std=c++11)
 
 ## Declare C++ executables:
-add_executable(elevator_call_generator src/elevator_call_generator.cpp)
-target_link_libraries(elevator_call_generator ${catkin_LIBRARIES})
-add_dependencies(elevator_call_generator simulation_generate_message_cpp)
+add_executable(poisson_call_generator src/poisson_call_generator.cpp)
+target_link_libraries(poisson_call_generator ${catkin_LIBRARIES})
+add_dependencies(poisson_call_generator simulation_generate_message_cpp)
 
 add_executable(master_elevator_nc src/master_elevator_nc.cpp)
 target_link_libraries(master_elevator_nc ${catkin_LIBRARIES})
