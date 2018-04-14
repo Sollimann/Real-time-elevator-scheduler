@@ -92,8 +92,8 @@ inside the src-folder of you workspace
 	```
 4. Enter the folder where you want to clone the repostory:
 	```bash
-	$ cd rts_simulation_ws/src
-	```
+	$ cd ~/rts_simulation_ws/
+	$ catkin_make
   
 5. Open a second window and run ROS (DO NOT close this window until after simulation is complete): 
 	```bash
