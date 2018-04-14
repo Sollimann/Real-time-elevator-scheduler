@@ -3,6 +3,7 @@
 ## Prerequisites
 
 Linux distributions such as Wily (Ubuntu 15.10), Xenial (Ubuntu 16.04) and Jessie (Debian 8)
+C++ 11 compiler or newer
 
 ## 1. Install ROS kinetic for Ubuntu (If you do not have it already) ##
 
