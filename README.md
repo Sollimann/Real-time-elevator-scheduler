@@ -88,24 +88,20 @@ inside the src-folder of you workspace
 
 3. Compile the code by running "catkin_make" inside the workspace:
 	```bash
-	~/rts_simulation_ws$ catkin_make
-	```
-4. Enter the folder where you want to clone the repostory:
-	```bash
 	$ cd ~/rts_simulation_ws/
 	$ catkin_make
   
-5. Open a second window and run ROS (DO NOT close this window until after simulation is complete): 
+4. Open a second window and run ROS (DO NOT close this window until after simulation is complete): 
 	```bash
 	$ roscore
 	```
 
-6. Open a third window and and run the first algorithm. (this will not publish anything at first):
+5. Open a third window and and run the first algorithm. (this will not publish anything at first):
 	```bash
 	$ rosrun simulation master_elevator_nc
 	```
   
-7. Open a fourth window and and run the second algorithm. (this will not publish anything at first):
+6. Open a fourth window and and run the second algorithm. (this will not publish anything at first):
 	```bash
 	$ rosrun simulation master_elevator_fso
 	```
