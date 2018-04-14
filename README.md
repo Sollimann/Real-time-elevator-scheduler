@@ -90,7 +90,7 @@ Robot operating system (ROS) provides services designed for heterogeneous comput
 	$ cd rts_simulation_ws/src
 	```
   
-5. Open a second window and run ROS (DO NOT CLOSE): 
+5. Open a second window and run ROS (DO NOT close this window until after simulation is complete): 
 	```bash
 	$ roscore
 	```
