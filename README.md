@@ -5,7 +5,12 @@
 Linux distributions such as Wily (Ubuntu 15.10), Xenial (Ubuntu 16.04) and Jessie (Debian 8)
 
 ## 1. Install ROS kinetic for Ubuntu (If you do not have it already) ##
-###### This should take tops 5 minutes. If you have another version of linux but Ubuntu, follow this guide: http://wiki.ros.org/kinetic/Installation
+
+###### This should take tops 5 minutes. If you have another version of linux but Ubuntu, follow this guide: http://wiki.ros.org/kinetic/Installation ######
+
+Robot operating system (ROS) provides services designed for heterogeneous computer cluster such as hardware abstraction, low-level device control, implementation of commonly used functionality, message-passing between processes, and package management. The main ROS client libraries (C++, Python, and Lisp) are geared toward a Unix-like system, primarily because of their dependence on large collections of open-source software dependencies.
+
+
 -------------------------
 
 1. Setup your computer to accept software from packages.ros.org.
@@ -85,7 +90,7 @@ Linux distributions such as Wily (Ubuntu 15.10), Xenial (Ubuntu 16.04) and Jessi
 	$ cd rts_simulation_ws/src
 	```
   
-5. Open a new window and run ROS: 
+5. Open a second window and run ROS (DO NOT CLOSE): 
 	```bash
 	$ roscore
 	```
