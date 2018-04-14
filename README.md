@@ -83,6 +83,7 @@ Robot operating system (ROS) provides services designed for heterogeneous comput
 	```bash
 	$ git clone https://github.com/Sollimann/simulation.git
 	```
+Ps. You can also manually download the zip-folder in the up-right corner 
 
 3. Compile the code by running "catkin_make" inside the workspace:
 	```bash
