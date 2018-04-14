@@ -53,8 +53,8 @@ Robot operating system (ROS) provides services designed for heterogeneous comput
 
 1. creating a catkin workspace:
 	```bash
-	$ mkdir -p ~/catkin_grp1_ws/src
-	$ cd ~/catkin_grp1_ws/src
+	$ mkdir -p ~/rts_simulation_ws/src
+	$ cd ~/rts_simulation_ws/src
 	$ catkin_init_workspace
   
 2. building the workspace created:
