@@ -75,10 +75,15 @@ CallGenerator::CallGenerator(ros::NodeHandle &nh){
     std::random_device rd; // uniformly-distributed integer random number generator
     std::mt19937 rng (rd ()); // mt19937: Pseudo-random number generation
 
+    /******** ADJUSTABLE PARAMETERS *******/
+    //must correponds with nr. passengers in
+    //master_elevator_nc.cpp & master_elevator_fso.cpp
     int totNumberOfPassengers = 20;
     double averageArrivalTime = 2;
-    double lamda = 1 / averageArrivalTime;
-    std::exponential_distribution<double> exp (lamda);
+    /**************************************/
+
+    double lambda = 1 / averageArrivalTime;
+    std::exponential_distribution<double> exp (lambda);
 
     double sumArrivalTimes=0;
     double newArrivalTime;
@@ -113,8 +118,8 @@ CallGenerator::CallGenerator(ros::NodeHandle &nh){
     //Set start time
     tstart = std::time(0);
 
-    std::cout << "PASSENGER FLOW HAS STARTED!" << std::endl;
-    std::cout << "waiting for calls to arrive..." << std::endl;
+    std::cout << "PASSENGER FLOW HAS STARTED! \n \n" << std::endl;
+    std::cout << "waiting for calls to arrive... \n" << std::endl;
 }
 
 
@@ -145,7 +150,7 @@ void CallGenerator::time_to_publish() {
             std::cout << "Time of call: " << requests.front().time << std::endl;
             std::cout << "From floor: " << requests.front().floor << std::endl;
             std::cout << "Going to floor: " << requests.front().direction << std::endl;
-            std::cout << " \n \n CALL IS SENT TO MASTER ELEVATOR! " << std::endl;
+            std::cout << " \n \n CALL IS SENT TO MASTER ELEVATOR! \n " << std::endl;
 
             //remove caller from queue
             requests.pop();
@@ -153,7 +158,10 @@ void CallGenerator::time_to_publish() {
         }
     }else{
         if(count == 0) {
-            std::cout << "POISSON DISTRIBUTED PASSENGER FLOW IS COMPLETE!" << std::endl;
+            std::cout << "\n \n \n \n \n \n \n " << std::endl;
+            std::cout << "*****************************************************" << std::endl;
+            std::cout << "** POISSON DISTRIBUTED PASSENGER FLOW IS COMPLETE! **" << std::endl;
+            std::cout << "*****************************************************" << std::endl;
             std::cout << "Waiting for elevators to complete their simulation..." << std::endl;
 
             count++;

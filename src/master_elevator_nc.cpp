@@ -29,6 +29,13 @@ float totTravelTimeforPassengers = 0;
 float totWaitingTimeforPassengers = 0;
 float totNrPassengersHandled = 0;
 
+/***************** ADJUSTABLE PARAMETER *******************/
+
+//Decide how many people you want to handle.
+//Ps. this must correpond with nr. of passengers for the poisson distribution
+//in poisson_call_generator.cpp
+float numberOfPassengersTravelling = 20;
+
 /************************ ELEVATOR CAR ****************************/
 /*************************** CLASS ********************************/
 // This class handles the elevator control of each separate elevator car
@@ -409,7 +416,7 @@ void MasterElevator::pickElevatorToHandleCall(const simulation::calls& subMsg) {
 
     /************************** SIMULATION COMPLETES AT *****************************/
 
-    if(totNrPassengersHandled == 20 && Elevator1.idle && Elevator2.idle){
+    if(totNrPassengersHandled == numberOfPassengersTravelling && Elevator1.idle && Elevator2.idle){
         std::cout << "\n \n SIMULATION IS COMPLETE! \n \n" << std::endl;
         std::cout << "STATISTICS: \n" << std::endl;
 
@@ -421,7 +428,7 @@ void MasterElevator::pickElevatorToHandleCall(const simulation::calls& subMsg) {
         std::cout << "\n \n";
 
         std::cout << "Average travel time: " << totTravelTimeforPassengers/totNrPassengersHandled << std::endl;
-        std::cout << "Average response " << (totTravelTimeforPassengers + totWaitingTimeforPassengers)/totNrPassengersHandled << std::endl;
+        std::cout << "Average response time: " << (totTravelTimeforPassengers + totWaitingTimeforPassengers)/totNrPassengersHandled << std::endl;
         std::cout << "RESULT OF OBJECTIVE FUNCTION: \n \n";
         std::cout << "Average waiting time: " << totWaitingTimeforPassengers/totNrPassengersHandled << std::endl;
 
