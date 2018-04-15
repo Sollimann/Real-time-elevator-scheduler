@@ -72,7 +72,7 @@ Robot operating system (ROS) provides services designed for heterogeneous comput
 	  /home/youruser/rts_simulation_ws/src:/opt/ros/kinetic/share:/opt/ros/kinetic/stacks 
 
 
-## How to run the code ##
+## 3. How to run the code ##
 -------------------------
 1. Enter the folder where you want to clone the repostory:
 	```bash
@@ -105,11 +105,27 @@ inside the src-folder of you workspace
 	```bash
 	$ rosrun simulation master_elevator_fso
 	```
-## Simulation starts by ##
+## 4. Simulation starts by ##
 -------------------------
 1. Open a fifth and final window, and run the following line to start the simulation:
 	```bash
 	$ rosrun simulation poisson_call_generator
 	```
 2. properly adjust the third and fourth window, and enjoy the elevator animation
+
+## Data ##
+-------------------------
+1. ###### Input:
+	poisson_call_generator.cpp: All times are generated from a stationary Poisson point process. <br />
+	Floors are generated randomly. A call is an object consistig off call(time of arrival, current floor, desired floor).
+	
+2. ###### Output:
+	master_elevator_nc.cpp: Average Travel Time, Average Response Time, Average Waiting Time
+	master_elevator_fso.cpp: Average Travel Time, Average Response Time, Average Waiting Time
+
+## Adjustable parameters ##
+-------------------------
+	master_elevator_fso.cpp: numberOfPassengersTravelling
+	master_elevator_nc.cpp: numberOfPassengersTravelling
+	poisson_call_generator.cpp: totNumberOfPassengers, averageArrivalTime
 
