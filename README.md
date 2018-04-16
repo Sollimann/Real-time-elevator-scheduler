@@ -26,7 +26,7 @@ Robot operating system (ROS) provides services designed for heterogeneous comput
 
 3. Update:
 	```bash
-	$sudo apt-get update
+	$ sudo apt-get update
   
 4. Installation:
 	```bash
@@ -62,12 +62,13 @@ Robot operating system (ROS) provides services designed for heterogeneous comput
   
 3. source the current workspace:
 	```bash
-	$ source devel/setup.bash
+	$ echo "source rts_simulation_ws/devel/setup.bash" >> ~/.bashrc
+	$ source ~/.bashrc
 	```
 4. To make sure the workspace is properly overlayed:
 	```bash
 	$ echo $ROS_PACKAGE_PATH
-	  /home/youruser/rts_simulation_ws/src:/opt/ros/kinetic/share:/opt/ros/kinetic/stacks 
+	  /home/youruser/rts_simulation_ws/src:/opt/ros/kinetic/share 
 
 
 ## 3. How to run the code ##
