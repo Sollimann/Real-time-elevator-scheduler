@@ -26,7 +26,7 @@ Robot operating system (ROS) provides services designed for heterogeneous comput
 
 3. Update:
 	```bash
-	$sudo apt-get update
+	$ sudo apt-get update
   
 4. Installation:
 	```bash
@@ -41,6 +41,7 @@ Robot operating system (ROS) provides services designed for heterogeneous comput
 
 6. Environment setup:
 	```bash
+	$ echo "source /opt/ros/kinetic/setup.bash" >> ~/.bashrc
 	$ echo "source /opt/ros/kinetic/setup.bash" >> ~/.bashrc
 	$ source ~/.bashrc
 
