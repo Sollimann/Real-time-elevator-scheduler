@@ -63,8 +63,10 @@ Robot operating system (ROS) provides services designed for heterogeneous comput
 3. source the current workspace:
 	```bash
 	$ echo "source rts_simulation_ws/devel/setup.bash" >> ~/.bashrc
-	```
-4. To make sure the workspace is properly overlayed:
+	
+3. close the current window.
+
+4. Open a new window. To make sure the workspace is properly overlayed:
 	```bash
 	$ echo $ROS_PACKAGE_PATH
 	  /home/youruser/rts_simulation_ws/src:/opt/ros/kinetic/share 
