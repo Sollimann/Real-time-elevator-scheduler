@@ -8,8 +8,6 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
 )
 
-find_package(Armadillo REQUIRED)
-
 add_message_files(
   FILES
   calls.msg
