@@ -77,8 +77,8 @@ CallGenerator::CallGenerator(ros::NodeHandle &nh){
     /******** ADJUSTABLE PARAMETERS *******/
     //must correponds with nr. passengers in
     //master_elevator_nc.cpp & master_elevator_fso.cpp
-    int totNumberOfPassengers = 20;
-    double averageArrivalTime = 2;
+    int totNumberOfPassengers = 20; //[5-1000]
+    double averageArrivalTime = 2; // [1-5] 
     /**************************************/
 
     double lambda = 1 / averageArrivalTime;

@@ -34,7 +34,7 @@ float totNrPassengersHandled = 0;
 //Decide how many people you want to handle.
 //Ps. this must correpond with nr. of passengers for the poisson distribution
 //in poisson_call_generator.cpp
-float numberOfPassengersTravelling = 20;
+float numberOfPassengersTravelling = 20; //[5 - 1000]
 
 /************************ ELEVATOR CAR ****************************/
 /*************************** CLASS ********************************/
